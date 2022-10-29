@@ -1,35 +1,67 @@
+from tkinter import *
+from tkinter import filedialog
 from pytube import YouTube
+from moviepy import *
+from moviepy.editor import VideoFileClip
+import shutil
 
-# Запрос у пользователя места для сохранения видео
-save_path = input("Where do you want to save video? (Exapmle: C:/Users/Username/Downloads)\n")
 
-while True:
-    # Запрос у пользователя ссылки на видео
-    video_link = input("Enter link to video you want to download: \n")
+# Finctions
+def select_path():
+    # Allows user to celect a path
+    path = filedialog.askdirectory()
+    path_label.config(text=path)
 
-    # Попытка найти видео по полученной ссылке
+
+def download_file():
+    # Get user path
+    get_link = link_field.get()
+    # Get selected path
+    user_path = path_label.cget("text")
+    screen.title("Downloading...")
+    # Download video
     try:
-        get_video = YouTube(video_link)
+        mp4_video = YouTube(get_link).streams.get_highest_resolution().download()
+        vid_clip = VideoFileClip(mp4_video)
+        vid_clip.close()
+        # Move to selected directory
+        shutil.move(mp4_video, user_path)
+        screen.title("Download Complete! Download another file.")
     except:
-        print("Connection error.")
-        
-    # Получение видео с максимальным разрешением
-    video = get_video.streams.get_highest_resolution()
+        screen.title("Error! Link is broked or video is unavailabe.")
 
-    # Попытка скачать видео
-    print('Dowloading...')
-    try:
-        video.download(save_path)
-    except:
-        print("Some Error!")
 
-    print('Task Completed!')
+# GUI
+screen = Tk()
+title = screen.title("YouTube Downloader")
+canvas = Canvas(screen, width=500, height=500)
+canvas.pack()
 
-    repeat = input('Dou want to download another video? (y/n)\n')
-    if repeat == 'y':
-        continue
-    elif repeat =='n':
-        break
-    elif repeat != 'y' and repeat != 'n':
-        print(repeat)
-        continue
+# YouTube logo
+logo_img = PhotoImage(file="YouTube_Logo.png")
+logo_img = logo_img.subsample(5, 5)
+canvas.create_image(250, 80, image=logo_img)
+
+link_field = Entry(screen, width=50)
+link_label = Label(screen, text="Enter download link: ", font=("Arial", 15))
+
+# Select path to save file
+path_label = Label(
+    screen, text="Select path for download: ", font=("Arial", 15))
+select_btn = Button(screen, text="Select", command=select_path)
+
+# Add to window
+canvas.create_window(250, 280, window=path_label)
+canvas.create_window(250, 330, window=select_btn)
+
+# Widgets
+canvas.create_window(250, 170, window=link_label)
+canvas.create_window(250, 220, window=link_field)
+
+# Download button
+download_btn = Button(screen, text="Download File", command=download_file)
+# Add to canvas
+canvas.create_window(250, 390, window=download_btn)
+
+
+screen.mainloop()
